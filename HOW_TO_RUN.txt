@@ -1,0 +1,177 @@
+Kubernetes Cluster Security Analysis and Monitoring System
+STEP-BY-STEP GUIDE FOR NEW USERS
+============================================================
+
+What this project does
+----------------------
+It is a small security dashboard for a Kubernetes lab cluster.
+It logs you in, reads the cluster, finds unsafe settings (root/privileged pods,
+weak RBAC), can scan images with Trivy, then shows a score and a report.
+
+You do NOT need a real company cluster. A laptop + Minikube is enough.
+
+
+PART A — One-time setup (do this first)
+=======================================
+
+Step 1. Install Python 3
+  Mac:    already installed, or install from https://www.python.org/downloads/
+  Windows: install Python 3.11+ and TICK “Add Python to PATH”
+  Check:
+      python3 --version
+  You should see something like Python 3.11 or 3.12.
+
+Step 2. Open Terminal (Mac) or Command Prompt / PowerShell (Windows)
+
+Step 3. Go into this folder
+  Example (Mac):
+      cd ~/Downloads/Kubernetes_Security_Monitor_Code
+  Example (Windows):
+      cd %USERPROFILE%\Downloads\Kubernetes_Security_Monitor_Code
+
+  Check you are in the right place:
+      ls
+  You must see:  requirements.txt   and   k8s_security_monitor
+
+Step 4. (Recommended) Create a virtual environment
+      python3 -m venv .venv
+
+  Activate it:
+      Mac:     source .venv/bin/activate
+      Windows: .venv\Scripts\activate
+
+  Your prompt should now start with (.venv)
+
+Step 5. Install Python libraries
+      pip3 install -r requirements.txt
+
+  Wait until it finishes with no red errors.
+
+
+PART B — Quick test (no Kubernetes needed)
+==========================================
+
+Step 6. Run the offline self-check
+      python3 -m k8s_security_monitor.selfcheck
+
+  Expected result:
+      Findings: 3
+       - MC-004: hostNetwork enabled
+       - MC-002: Privileged container
+       - MC-001: Container running as root
+      Score: 70 (Medium)
+      Self-check passed.
+
+  If you see that, the detection and scoring code works.
+
+
+PART C — Full demo with a local cluster
+=======================================
+
+Do these extra installs once (only for the live dashboard):
+
+Step 7. Install kubectl
+  Mac (Homebrew):   brew install kubectl
+  Windows:          https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+  Check:            kubectl version --client
+
+Step 8. Install Minikube (and Docker Desktop)
+  Docker Desktop:   https://www.docker.com/products/docker-desktop/
+  Minikube:         https://minikube.sigs.k8s.io/docs/start/
+  Check Docker is running (whale icon on Mac / system tray on Windows).
+
+Step 9. Start a local Kubernetes cluster
+      minikube start
+
+  First start can take several minutes. Wait until it says the cluster is running.
+  Check:
+      kubectl get nodes
+  You should see one node Ready.
+
+Step 10. Deploy the sample apps (safe + unsafe)
+      kubectl apply -f k8s_security_monitor/manifests/secure_baseline.yaml
+      kubectl apply -f k8s_security_monitor/manifests/insecure_workloads.yaml
+
+  Check:
+      kubectl get pods
+  You should see pods such as secure-baseline-pod and insecure-root-pod.
+
+Step 11. (Optional) Install Trivy for image CVE scanning
+  Mac:     brew install trivy
+  Other:   https://trivy.dev/
+  If Trivy is missing, the app still runs; image CVE rows may be empty.
+
+
+PART D — Start the website
+==========================
+
+Step 12. From the SAME folder as requirements.txt, start the app
+      python3 -m k8s_security_monitor.app
+
+  You should see something like:
+      Running on http://127.0.0.1:5000
+
+  Leave this window open. Do not close it while you use the dashboard.
+
+Step 13. Open a browser
+  Go to:   http://127.0.0.1:5000
+
+Step 14. Log in
+  Username:  admin
+  Password:  ChangeMe123!
+
+Step 15. Run a scan
+  Click the “Run scan” button.
+  The page should show a security score, P1 count, and a table of findings
+  (privileged pod, root container, hostNetwork, weak RBAC, and CVEs if Trivy is installed).
+
+Step 16. Check the downloadable report
+  After a scan, a file named security_report.md is created in this folder.
+  Open it in any text editor.
+
+
+PART E — Stop everything
+========================
+
+Step 17. In the Terminal where the app is running, press:
+      Ctrl + C
+
+Step 18. (Optional) Stop Minikube to save battery
+      minikube stop
+
+Step 19. Delete the demo pods (optional)
+      kubectl delete -f k8s_security_monitor/manifests/insecure_workloads.yaml
+      kubectl delete -f k8s_security_monitor/manifests/secure_baseline.yaml
+
+
+If something goes wrong
+=======================
+
+Problem: python3: command not found
+  Use “python” instead of “python3”, or reinstall Python and tick PATH.
+
+Problem: pip3: command not found
+  Try:   python3 -m pip install -r requirements.txt
+
+Problem: ModuleNotFoundError: flask  or  kubernetes
+  You are not in the venv, or Step 5 was skipped.
+  Activate .venv again, then repeat:  pip3 install -r requirements.txt
+
+Problem: Kubernetes client unavailable
+  Minikube is not running, or kubectl cannot see the cluster.
+  Run:   minikube start
+         kubectl get nodes
+
+Problem: Login page says Invalid credentials
+  Use exactly:  admin   and   ChangeMe123!
+  (no extra spaces)
+
+Problem: Browser cannot open 127.0.0.1:5000
+  The app is not running, or another program is using port 5000.
+  Start Step 12 again and read the URL printed in Terminal.
+
+
+Default login (lab only — change later)
+  Username: admin
+  Password: ChangeMe123!
+EOF
